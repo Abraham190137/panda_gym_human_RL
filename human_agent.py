@@ -53,7 +53,7 @@ class PickAndPlaceHumanAgent:
         """
         # The locations of the object and goal in the oculus sim.
         rec_obj_location = np.array([0.1, 0.1, 0.02])
-        rec_goal_location = np.array([-0.1, -0.1, 0.02])
+        rec_goal_location = np.array([-0.1, -0.1, 0.12])
         
         # Find the adjustments for the simulation instance
         self.adjust_mult = (object_location - goal_location)/(rec_obj_location - rec_goal_location)
