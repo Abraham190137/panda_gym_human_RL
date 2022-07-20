@@ -5,22 +5,34 @@ import time
 
 from custom_enviroment import CustomEnv
 from copy import deepcopy as dc
-from human_agent import StackHumanAgent
-# from panda_gym.envs.panda_tasks.panda_stack import PandaStackEnv
+from human_agent import *
+from panda_gym.envs.panda_tasks.panda_pick_and_place import PandaPickAndPlaceEnv
 from custom_stack_env import PandaStackEnv
     
-size = 1000 # Total number of sims to save into the human buffer 
+size = 5000 # Total number of sims to save into the human buffer 
 render = False
-recording_file_name = "Oculus_Data\\test69.txt" # Oculus output file to read in
-save_file_name = "Oculus_Data\\Stack_7-20" # File to pickle the buffer into
-env = PandaStackEnv(render = render) # task enviroment
+save = True
+use_noise = True
+save_file_name = "Human_Buffers\\Pick and Place, ns0.3, s5000, 7-20" # File to pickle the buffer into
 MAX_EPISODES = 100 # Number of Episodes (how many runs per minibatch - how often the runs are saved into memory)
 MAX_CYCLES = int(size/MAX_EPISODES)
-EPISODE_LENGTH = 100 # Number of sim steps per simulation
+
 
 # Create the human agent
-agent = StackHumanAgent(env, recording_file_name, 0, EPISODE_LENGTH, start=0, switch_blocks = 340,
+recording_file_name = "Oculus_Data\\test59.txt" # Oculus output file to read in
+env = PandaPickAndPlaceEnv(render = render) # task enviroment
+EPISODE_LENGTH = 50 # Number of sim steps per simulation
+agent = PickAndPlaceHumanAgent(env, recording_file_name, 8, EPISODE_LENGTH, start=205, z_start = 260,
                    end=-1, size = size, offset=[0, 0, -0.02, 0])
+action_multiplier = np.array([1, 1, 1, 0.3])
+
+# recording_file_name = "Oculus_Data\\test69.txt" # Oculus output file to read in
+# env = PandaStackEnv(render = render) # task enviroment
+# EPISODE_LENGTH = 100
+# agent = StackHumanAgent(env, recording_file_name, 0, EPISODE_LENGTH, start=0, switch_blocks = 340,
+#                    end=-1, size = size, offset=[0, 0, -0.02, 0])
+# action_multiplier = np.array([1, 1, 1, 0.3])
+
 
 count = 0 # Count the total number of simulations
 for cycle in range(0, MAX_CYCLES):
@@ -56,7 +68,7 @@ for cycle in range(0, MAX_CYCLES):
 
         #rest the envirmonet and the human agent
         obs = env.reset()
-        agent.reset(obs['achieved_goal'][0:3], obs['achieved_goal'][3:6], obs['desired_goal'][0:3])
+        agent.reset(obs['achieved_goal'], obs['desired_goal'][0:3])
         
         # generate random sigma and theta values for the OUNoise 
         sigma = 0.3*np.random.uniform()
@@ -73,10 +85,13 @@ for cycle in range(0, MAX_CYCLES):
             # Update OUNoise
             noise += np.random.uniform(-sigma, sigma, 4)
             noise += -noise*theta
+
+            if not use_noise:
+                noise = 0
             
             # Get the human action and pass it into the sim
-            action = agent.get_action(t)*np.array([1, 1, 1, 5]) + noise
-            next_env_dict, reward, done, info = env.step(action*np.array([1, 1, 1, 0.2]))
+            action = agent.get_action(t)/action_multiplier + noise
+            next_env_dict, reward, done, info = env.step(action*action_multiplier)
             
             # Store the state data
             next_state = next_env_dict["observation"]
@@ -113,6 +128,7 @@ for cycle in range(0, MAX_CYCLES):
     # add transitions to the replay buffer (after each cycle ---> MAX_EPISODES * MAX_EP_LENGTH)
     agent.store(mb)
 
-agent.memory.save(save_file_name) # pickle the memory
+if save:
+    agent.memory.save(save_file_name) # pickle the memory
 
 env.close() # close the sim
