@@ -1,5 +1,5 @@
 # Panda-Gym
-Customization of the original [panda-gym environment](github.com/qgallouedec/panda-gym). To run this codebase, follow the instructions to install standard panda-gym, and then clone this code. Additionally, the human buffer will need to be generated (ADD THIS CODE), or one of the buffers from the repository will need to be used.
+Customization of the original [panda-gym environment](github.com/qgallouedec/panda-gym). To run this codebase, follow the instructions to install standard panda-gym, and then clone this code. Additionally, the human buffer will need to be generated (ADD THIS CODE), or one of the buffers from the repository (NEED TO FIGURE OUT GIT LFS TO DO THIS) will need to be used. 
 
 
 ## DDPG + HER + Human Example
