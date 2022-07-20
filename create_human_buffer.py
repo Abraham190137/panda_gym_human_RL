@@ -11,14 +11,14 @@ from custom_stack_env import PandaStackEnv
     
 size = 5000 # Total number of sims to save into the human buffer 
 render = False
-save = False
+save = True
 use_noise = True
 save_file_name = "Human_Buffers\\Pick and Place, ns0.3, s5000, 7-20" # File to pickle the buffer into
 MAX_EPISODES = 100 # Number of Episodes (how many runs per minibatch - how often the runs are saved into memory)
 MAX_CYCLES = int(size/MAX_EPISODES)
 
 
-Create the human agent
+# Create the human agent
 recording_file_name = "Oculus_Data\\test59.txt" # Oculus output file to read in
 env = PandaPickAndPlaceEnv(render = render) # task enviroment
 EPISODE_LENGTH = 50 # Number of sim steps per simulation
