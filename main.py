@@ -27,7 +27,7 @@ run_label = "Pick and Place - Humam25p - E40, C20, EP16, np4, rs"
 
 # Name of the human_buffer_file to use. If no human buffer is desired, put None
 human_buffer_file = "Human_Buffers/Human_Buffer_Pick_and_Place_7-12.pkl"
-RunEnv = PandaStackEnv # Panda_Gym enviroment for the run.
+RunEnv = PandaPickAndPlaceEnv # Panda_Gym enviroment for the run.
 env_name = "PandaPickAndPlaceEnv"
     
 # --------------------------------------------------------
