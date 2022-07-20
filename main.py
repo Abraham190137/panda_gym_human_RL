@@ -24,11 +24,11 @@ import csv
 import time
 
 # Name of the folder to save the run data in:
-run_label = "Stack - Humam25p - E200, C20, EP16, np4, ES100, ns0.2, ap0.2, rs"
+run_label = "Stack - Humam25p - E200, C20, EP16, np4, ES100, ns0.3, ap0.2, rs"
 # run_label = 'Delete me'
 
 # Name of the human_buffer_file to use. If no human buffer is desired, put None
-human_buffer_file = "Human_Buffers/Human_Buffer_Stack_7-18.pkl"
+human_buffer_file = "Human_Buffers/Stack, ns0.3, s2000, 7-20"
 RunEnv = PandaStackEnv # Panda_Gym environment for the run.
 env_name = "CustomPandaStackEnv"
     
@@ -58,7 +58,7 @@ tau = 0.05
 k_future = 4                # Determines what % of the sampled transitions are HER vs ER (k_future = 4 results in 80% HER)
 human_portion = 0.25 # Portion of training done with the human buffer
 action_penalty = 0.2
-action_multiplier = np.array([1, 1, 1, 0.2]) # Adjust the action. Between 0.1 and 0.3 seems good.
+action_multiplier = np.array([1, 1, 1, 0.3]) # Adjust the action. Between 0.1 and 0.3 seems good.
 # resume_file = "pick_and_place_agent_weights.pth"
 # resume_epoch = 100
 
