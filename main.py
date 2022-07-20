@@ -1,7 +1,8 @@
 
-from enviroment import CoustomEnv
+from custom_enviroment import CustomEnv
+from custom_stack_env import PandaStackEnv
 from panda_gym.envs.panda_tasks.panda_pick_and_place import PandaPickAndPlaceEnv
-from panda_gym.envs.panda_tasks.panda_stack import PandaStackEnv
+# from panda_gym.envs.panda_tasks.panda_stack import PandaStackEnv
 from noise import UniformNoise, OUNoise, UniformNoiseDecay
 from agent import Agent
 from human_buffer import HumanBuffer
@@ -23,12 +24,13 @@ import csv
 import time
 
 # Name of the folder to save the run data in:
-run_label = "Pick and Place - Humam25p - E40, C20, EP16, np4, rs"
+run_label = "Stack - Humam25p - E200, C20, EP16, np4, ES100, ns0.2, ap0.2, rs"
+# run_label = 'Delete me'
 
 # Name of the human_buffer_file to use. If no human buffer is desired, put None
-human_buffer_file = "Human_Buffers/Human_Buffer_Pick_and_Place_7-12.pkl"
-RunEnv = PandaPickAndPlaceEnv # Panda_Gym enviroment for the run.
-env_name = "PandaPickAndPlaceEnv"
+human_buffer_file = "Human_Buffers/Human_Buffer_Stack_7-18.pkl"
+RunEnv = PandaStackEnv # Panda_Gym environment for the run.
+env_name = "CustomPandaStackEnv"
     
 # --------------------------------------------------------
 # ---------------- DEFINE HYPERPARAMETERS ----------------
@@ -42,11 +44,11 @@ RENDER = True
 INTRO = False
 Train = True
 Play_FLAG = False
-MAX_EPOCHS = 100             # NOTE: fetch push should need 12-13 epochs to achieve baseline performance
+MAX_EPOCHS = 200             # NOTE: fetch push should need 12-13 epochs to achieve baseline performance
 MAX_CYCLES = 20
 num_updates = 40
 MAX_EPISODES = 16           # NOTE: matching HER paper that has 800 episodes per epoch (50 cycles * 16 episodes = 800)
-EPISODE_STEPS = 50 
+EPISODE_STEPS = 100 
 memory_size = 1e6  # 7e+5 // 50
 batch_size = 256
 actor_lr = 1e-3
@@ -55,18 +57,25 @@ gamma = 0.98
 tau = 0.05  
 k_future = 4                # Determines what % of the sampled transitions are HER vs ER (k_future = 4 results in 80% HER)
 human_portion = 0.25 # Portion of training done with the human buffer
+action_penalty = 0.2
 action_multiplier = np.array([1, 1, 1, 0.2]) # Adjust the action. Between 0.1 and 0.3 seems good.
+# resume_file = "pick_and_place_agent_weights.pth"
+# resume_epoch = 100
 
 
-# store the hyperparameters in pandas dataframe to save later on
-n_timesteps = MAX_EPOCHS * MAX_CYCLES * MAX_EPISODES * 50
-hyperparams = {'col1': ["Random Seed", "Max Epochs", "Max Cycles", "Max Episodes", "Total Env Steps", 
-                        "Number of Updates", "Memory Size", "Batch Size", "Actor LR", 
-    "Critic LR", "Gamma", "Tau", "K Future", "Human Portion", "Env", "Run Label", "Episode Steps"], 
-               'col2': [RANDOM_SEED, MAX_EPOCHS, MAX_CYCLES, MAX_EPISODES, n_timesteps, num_updates, memory_size, 
-                        batch_size, actor_lr, critic_lr, gamma, tau, k_future, human_portion, env_name, run_label, EPISODE_STEPS]}
+# store the hyper parameters in pandas data frame to save later on
+n_timesteps = MAX_EPOCHS * MAX_CYCLES * MAX_EPISODES * EPISODE_STEPS
+hyperparams = {'col1': ["Random Seed", "Max Epochs", "Max Cycles", "Max Episodes",
+        "Total Env Steps", "Number of Updates", "Memory Size", "Batch Size", 
+        "Actor LR", "Critic LR", "Gamma", "Tau", "K Future", "Human Portion", 
+        "Env", "Run Label", "Episode Steps", "action_penalty", 'action mult'], 
+    'col2': [RANDOM_SEED, MAX_EPOCHS, MAX_CYCLES, MAX_EPISODES, n_timesteps, 
+        num_updates, memory_size, batch_size, actor_lr, critic_lr, gamma, tau, 
+        k_future, human_portion, env_name, run_label, EPISODE_STEPS, 
+        action_penalty, action_multiplier]}
 
 hyp_df = pd.DataFrame(data=hyperparams)
+
 
 
 # --------------------------------------------------------
@@ -215,14 +224,27 @@ agent = Agent(n_states=state_shape,
               path=load_path,
               human_file_path = human_buffer_file,
               env=dc(env),
-              action_penalty = 0.2)
+              action_penalty = action_penalty)
 
 
 # --------------------------------------------------------
 # -------------------- TRAINING LOOP ---------------------
 # --------------------------------------------------------
+# if resume_file is None:
+#     total_episodes = 0
+#     resume_epoch = 0
+# else:
+#     agent.load_weights(resume_file)
+#     total_episodes = resume_epoch*MAX_CYCLES*MAX_EPISODES
+#     if RENDER and MPI.COMM_WORLD.Get_rank() == 0:
+#             env.close()
+#             env = RunEnv(render = True)
+#             success_rate, running_reward, episode_reward = eval_agent(env, agent)
+#             env.close()
+#             env = RunEnv(render = False)
+#         else:
+#             success_rate, running_reward, episode_reward = eval_agent(env, agent, delay=0)
 total_episodes = 0
-
 noise = UniformNoise(env.action_space, amplitude = 0.2, pure_rand = 0.3)
 noise.reset()
 
@@ -407,7 +429,7 @@ if Train:
         plt.xlabel("Epoch")
         plt.ylabel("Success Rate")
         plt.savefig(path + "/success_rate_epoch.png")
-        plt.show()
+        # plt.show()
 
         # plot epoch vs. reward
         plt.figure()
@@ -415,7 +437,7 @@ if Train:
         plt.xlabel("Epoch")
         plt.ylabel("Reward")
         plt.savefig(path + "/reward_epoch.png")
-        plt.show()
+        # plt.show()
 
         # plot environment steps vs. success rate
         plt.figure()
@@ -423,7 +445,7 @@ if Train:
         plt.xlabel("Environment Steps")
         plt.ylabel("Success Rate")
         plt.savefig(path + "/success_rate_env_steps.png")
-        plt.show()
+        # plt.show()
 
         # plot environment steps vs episode reward
         plt.figure()
@@ -431,7 +453,7 @@ if Train:
         plt.xlabel("Environment Steps")
         plt.ylabel("Reward")
         plt.savefig(path + "/reward_env_steps.png")
-        plt.show()
+        # plt.show()
 
         # plot environment steps vs avg reward per cycle
         # get average of ep_reward for every MAX_CYCLES
@@ -444,7 +466,7 @@ if Train:
         plt.xlabel("Cycle Steps")
         plt.ylabel("Reward")
         plt.savefig(path + "/avg_reward_each_cycle.png")
-        plt.show()
+        # plt.show()
 
         titles = ['Episodes', 'Reward']
         rdata = np.zeros((len(ep_reward), 2))
@@ -460,10 +482,10 @@ if Train:
         pd_rdata.to_csv(rdata_csv, index=None)
 
 
-# # --------------------------------------------------------
-# # -------------- LOOP PLAYING TRAIN AGENT ----------------
-# # --------------------------------------------------------
-# elif Play_FLAG:
-#     weight_file = "FetchPickAndPlace-50-50-16.pth"
-#     player = Play(env, agent, weight_file, max_episode=100)
-#     player.evaluate()
+# --------------------------------------------------------
+# -------------- LOOP PLAYING TRAIN AGENT ----------------
+# --------------------------------------------------------
+elif Play_FLAG:
+    weight_file = "pick_and_place_agent_weights.pth"
+    player = Play(env, agent, weight_file, max_episode=100)
+    player.evaluate()
