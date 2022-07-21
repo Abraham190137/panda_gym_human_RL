@@ -24,13 +24,13 @@ import csv
 import time
 
 # Name of the folder to save the run data in:
-run_label = "Stack - Humam25p - E200, C20, EP16, np4, ES100, ns0.3, ap0.2, rs"
+run_label = "Pick and Place - Humam25p - E100, C20, EP16, np4, ns0.3, rs"
 # run_label = 'Delete me'
 
 # Name of the human_buffer_file to use. If no human buffer is desired, put None
-human_buffer_file = "Human_Buffers/Stack, ns0.3, s2000, 7-20"
-RunEnv = PandaStackEnv # Panda_Gym environment for the run.
-env_name = "CustomPandaStackEnv"
+human_buffer_file = "Human_Buffers/Pick and Place, ns0.3, s5000, 7-20.pkl"
+RunEnv = PandaPickAndPlaceEnv # Panda_Gym environment for the run.
+env_name = "PandaPickAndPlaceEnv"
     
 # --------------------------------------------------------
 # ---------------- DEFINE HYPERPARAMETERS ----------------
@@ -44,11 +44,11 @@ RENDER = True
 INTRO = False
 Train = True
 Play_FLAG = False
-MAX_EPOCHS = 200             # NOTE: fetch push should need 12-13 epochs to achieve baseline performance
+MAX_EPOCHS = 100             # NOTE: fetch push should need 12-13 epochs to achieve baseline performance
 MAX_CYCLES = 20
 num_updates = 40
 MAX_EPISODES = 16           # NOTE: matching HER paper that has 800 episodes per epoch (50 cycles * 16 episodes = 800)
-EPISODE_STEPS = 100 
+EPISODE_STEPS = 50 
 memory_size = 1e6  # 7e+5 // 50
 batch_size = 256
 actor_lr = 1e-3
@@ -57,7 +57,7 @@ gamma = 0.98
 tau = 0.05  
 k_future = 4                # Determines what % of the sampled transitions are HER vs ER (k_future = 4 results in 80% HER)
 human_portion = 0.25 # Portion of training done with the human buffer
-action_penalty = 0.2
+action_penalty = 1
 action_multiplier = np.array([1, 1, 1, 0.3]) # Adjust the action. Between 0.1 and 0.3 seems good.
 # resume_file = "pick_and_place_agent_weights.pth"
 # resume_epoch = 100
