@@ -1,0 +1,20 @@
+col1,col2
+Random Seed,70866
+Max Epochs,100
+Max Cycles,20
+Max Episodes,16
+Total Env Steps,1600000
+Number of Updates,40
+Memory Size,1000000.0
+Batch Size,256
+Actor LR,0.001
+Critic LR,0.001
+Gamma,0.98
+Tau,0.05
+K Future,4
+Human Portion,0.25
+Env,PandaPickAndPlaceEnv
+Run Label,"Pick and Place - Humam25p - E100, C20, EP16, np4, ns0.3, rs"
+Episode Steps,50
+action_penalty,1
+action mult,[1.  1.  1.  0.3]
