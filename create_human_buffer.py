@@ -4,34 +4,36 @@ import numpy as np
 import time
 
 from custom_enviroment import CustomEnv
+from custom_stack_env import CustomStackEnv
 from copy import deepcopy as dc
 from human_agent import *
 from panda_gym.envs.panda_tasks.panda_pick_and_place import PandaPickAndPlaceEnv
-from custom_stack_env import PandaStackEnv
     
 size = 5000 # Total number of sims to save into the human buffer 
 render = False
 save = True
 use_noise = True
-save_file_name = "Human_Buffers\\Pick and Place, ns0.3, s5000, 7-20" # File to pickle the buffer into
+save_file_name = "Human_Buffers\\Custom Stack (sparse), ns0.3, s5000, 7-22.pkl" # File to pickle the buffer into
 MAX_EPISODES = 100 # Number of Episodes (how many runs per minibatch - how often the runs are saved into memory)
 MAX_CYCLES = int(size/MAX_EPISODES)
+# save_file_name = 'delete me' 
 
 
 # Create the human agent
-recording_file_name = "Oculus_Data\\test59.txt" # Oculus output file to read in
-env = PandaPickAndPlaceEnv(render = render) # task enviroment
-EPISODE_LENGTH = 50 # Number of sim steps per simulation
-agent = PickAndPlaceHumanAgent(env, recording_file_name, 8, EPISODE_LENGTH, start=205, z_start = 260,
-                   end=-1, size = size, offset=[0, 0, -0.02, 0])
-action_multiplier = np.array([1, 1, 1, 0.3])
-
-# recording_file_name = "Oculus_Data\\test69.txt" # Oculus output file to read in
-# env = PandaStackEnv(render = render) # task enviroment
-# EPISODE_LENGTH = 100
-# agent = StackHumanAgent(env, recording_file_name, 0, EPISODE_LENGTH, start=0, switch_blocks = 340,
+# recording_file_name = "Oculus_Data\\test59.txt" # Oculus output file to read in
+# env = PandaPickAndPlaceEnv(render = render) # task enviroment
+# EPISODE_LENGTH = 50 # Number of sim steps per simulation
+# agent = PickAndPlaceHumanAgent(env, recording_file_name, 8, EPISODE_LENGTH, start=205, z_start = 260,
 #                    end=-1, size = size, offset=[0, 0, -0.02, 0])
 # action_multiplier = np.array([1, 1, 1, 0.3])
+
+
+recording_file_name = "Oculus_Data\\test69.txt" # Oculus output file to read in
+env = CustomStackEnv(render = render) # task enviroment
+EPISODE_LENGTH = 100
+agent = StackHumanAgent(env, recording_file_name, 0, EPISODE_LENGTH, start=0, switch_blocks = 340,
+                   end=-1, size = size)
+action_multiplier = np.array([1, 1, 1, 0.3])
 
 
 count = 0 # Count the total number of simulations
@@ -66,9 +68,9 @@ for cycle in range(0, MAX_CYCLES):
             achieved_goal = env_dict["achieved_goal"]
             desired_goal = env_dict["desired_goal"]
 
-        #rest the envirmonet and the human agent
-        obs = env.reset()
-        agent.reset(obs['achieved_goal'], obs['desired_goal'][0:3])
+        #rest the human agent
+        #agent.reset(env_dict['achieved_goal'], env_dict['desired_goal'][0:3])
+        agent.reset(env_dict['achieved_goal'][0:3], env_dict['achieved_goal'][3:6], env_dict['desired_goal'][0:3])
         
         # generate random sigma and theta values for the OUNoise 
         sigma = 0.3*np.random.uniform()
