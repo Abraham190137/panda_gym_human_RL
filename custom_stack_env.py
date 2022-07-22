@@ -131,8 +131,17 @@ class Stack(Task):
 
     def is_success(self, achieved_goal: np.ndarray, desired_goal: np.ndarray) -> Union[np.ndarray, float]:
         # must be vectorized !!
-        d = distance(achieved_goal, desired_goal)
-        return np.array((d < self.distance_threshold), dtype=np.float64)
+        # d = distance(achieved_goal, desired_goal)
+        if achieved_goal.ndim == 1: 
+            d1 = distance(achieved_goal[0:3], desired_goal[0:3])
+            d2 = distance(achieved_goal[3:6], desired_goal[3:6])
+        else:
+            d1 = distance(achieved_goal[:, 0:3], desired_goal[:, 0:3])
+            d2 = distance(achieved_goal[:, 3:6], desired_goal[:, 3:6])
+        test1 = np.array((d1 < self.distance_threshold), dtype=np.float64)
+        test2 = np.array((d2 < self.distance_threshold), dtype=np.float64)
+        return test1*test2
+        # return np.array((d < self.distance_threshold), dtype=np.float64)
 
     def compute_reward(self, achieved_goal, desired_goal, info: Dict[str, Any]) -> Union[np.ndarray, float]:
         d = distance(achieved_goal, desired_goal)
@@ -142,15 +151,17 @@ class Stack(Task):
         else:
             d1 = distance(achieved_goal[:, 0:3], desired_goal[:, 0:3])
             d2 = distance(achieved_goal[:, 3:6], desired_goal[:, 3:6])
-        if self.reward_type == "sparse":
-            test1 = np.array((d1 > self.distance_threshold), dtype=np.float64)
-            test2 = np.array((d2 > self.distance_threshold), dtype=np.float64)
-            return -np.clip(test1 + test2, 0, 1)
+        test1 = np.array((d1 > self.distance_threshold), dtype=np.float64)
+        test2 = np.array((d2 > self.distance_threshold), dtype=np.float64)
+        # if self.reward_type == "sparse":
+        #     return -np.clip(test1 + test2, 0, 1)
+        elif self.reward_type == 'semi-sparse':
+            return -(test1 + test2)
         else:
             return -d
 
 
-class PandaStackEnv(RobotTaskEnv):
+class CustomStackEnv(RobotTaskEnv):
     """Stack task wih Panda robot.
     Args:
         render (bool, optional): Activate rendering. Defaults to False.
@@ -159,7 +170,7 @@ class PandaStackEnv(RobotTaskEnv):
             Defaults to "ee".
     """
 
-    def __init__(self, render: bool = False, reward_type: str = "sparse", control_type: str = "ee") -> None:
+    def __init__(self, render: bool = False, reward_type: str = "semi-sparse", control_type: str = "ee") -> None:
         sim = PyBullet(render=render)
         robot = Panda(sim, block_gripper=False, base_position=np.array([-0.6, 0.0, 0.0]), control_type=control_type)
         task = Stack(sim, reward_type=reward_type)
