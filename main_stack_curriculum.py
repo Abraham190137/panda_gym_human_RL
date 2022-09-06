@@ -28,7 +28,7 @@ import time
 
 
 # Name of the folder to save the run data in:
-run_label = "Stack - Humam25p - E200, C20, EP16, ES100, np4, ns0.3, scaled curr, rs"
+run_label = "Stack - Humam25p - E200, C20, EP16, ES100, np4, ns0.3, rs"
 # run_label = 'Delete me'
 
 # Name of the human_buffer_file to use. If no human buffer is desired, put None
