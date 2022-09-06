@@ -6,42 +6,36 @@ import time
 from custom_enviroment import CustomEnv
 from custom_stack_env import CustomStackEnv
 from copy import deepcopy as dc
-from human_agent import *
+from rerun_agent import *
 from panda_gym.envs.panda_tasks.panda_pick_and_place import PandaPickAndPlaceEnv
     
 size = 100 # Total number of sims to save into the human buffer 
-render = True
+render = False
 use_noise = False
-save_file_name = "Human_Buffers\\Just_human.pkl" # File to pickle the buffer into
+save_file_name = "Re-Run_Buffers\\Test1.pkl" # File to pickle the buffer into
 MAX_EPISODES = 10 # Number of Episodes (how many runs per minibatch - how often the runs are saved into memory)
 MAX_CYCLES = int(size/MAX_EPISODES)
-set_start = np.array([0.1, 0.1, 0.02])
-set_goal = np.array([-0.1, -0.1, 0.12])
+save_file_name = 'Picka and Place Re-Run Buffer Test 1' 
+save_file_name = 'delete me'
 
 
 # Create the human agent
-# recording_file_name = "Oculus_Data\\test59.txt" # Oculus output file to read in
-# env = PandaPickAndPlaceEnv(render = render) # task enviroment
-# EPISODE_LENGTH = 50 # Number of sim steps per simulation
+recording_file_name = "Oculus_Data\\test59.txt" # Oculus output file to read in
+recording_file_name = "test_rerun_buffer2.pkl"
+env = PandaPickAndPlaceEnv(render = render) # task enviroment
+EPISODE_LENGTH = 50 # Number of sim steps per simulation
 # agent = PickAndPlaceHumanAgent(env, recording_file_name, 8, EPISODE_LENGTH, start=205, z_start = 260,
 #                    end=-1, size = size)
-# action_multiplier = np.array([1, 1, 1, 0.3])
+agent = PickAndPlaceReRunAgent(env, recording_file_name, 50, end_steps = 5, size = size)
+action_multiplier = np.array([1, 1, 1, 0.3])
 
-# # Create the human agent
-# recording_file_name = "Oculus_Data\\test57.txt" # Oculus output file to read in
-# env = CustomEnv(render = render) # task enviroment
-# EPISODE_LENGTH = 50 # Number of sim steps per simulation
-# agent = PushHumanAgent(env, recording_file_name, 10, EPISODE_LENGTH, start=160,
+
+# recording_file_name = "Oculus_Data\\test69.txt" # Oculus output file to read in
+# env = CustomStackEnv(render = render) # task enviroment
+# EPISODE_LENGTH = 100
+# agent = StackHumanAgent(env, recording_file_name, 0, EPISODE_LENGTH, start=0, switch_blocks = 340,
 #                    end=-1, size = size)
 # action_multiplier = np.array([1, 1, 1, 0.3])
-
-
-recording_file_name = "Oculus_Data\\test69.txt" # Oculus output file to read in
-env = CustomStackEnv(render = render) # task enviroment
-EPISODE_LENGTH = 100
-agent = StackHumanAgent(env, recording_file_name, 0, EPISODE_LENGTH, start=0, switch_blocks = 340,
-                   end=-1, size = size)
-action_multiplier = np.array([1, 1, 1, 0.3])
 
 
 count = 0 # Count the total number of simulations
@@ -62,14 +56,8 @@ for cycle in range(0, MAX_CYCLES):
             "next_state": [],
             "next_achieved_goal": []}
         
-        # # Restart the enviroment and get intial conditions
-        # env_dict = env.reset()
-        # env.sim.set_base_pose("target", set_goal, np.array([0.0, 0.0, 0.0, 1.0]))
-        # env.sim.set_base_pose("object", set_start, np.array([0.0, 0.0, 0.0, 1.0]))
-        # env.task.goal = set_goal
-
-        env_dict = env._get_obs()
-
+        # Restart the enviroment and get intial conditions
+        env_dict = env.reset()
         state = env_dict["observation"] 
         achieved_goal = env_dict["achieved_goal"]
         desired_goal = env_dict["desired_goal"]
@@ -84,8 +72,8 @@ for cycle in range(0, MAX_CYCLES):
             desired_goal = env_dict["desired_goal"]
 
         #rest the human agent
-        # agent.reset(env_dict['achieved_goal'], env_dict['desired_goal'][0:3])
-        agent.reset(env_dict['achieved_goal'][0:3], env_dict['achieved_goal'][3:6], env_dict['desired_goal'][0:3])
+        agent.reset(env_dict['achieved_goal'], env_dict['desired_goal'][0:3])
+        # agent.reset(env_dict['achieved_goal'][0:3], env_dict['achieved_goal'][3:6], env_dict['desired_goal'][0:3])
         
         # generate random sigma and theta values for the OUNoise 
         sigma = 0.3*np.random.uniform()
@@ -124,7 +112,7 @@ for cycle in range(0, MAX_CYCLES):
             achieved_goal = next_achieved_goal.copy()
             desired_goal = next_desired_goal.copy()
             if render: # if render, pause so that the rendering is human viewable 
-                time.sleep(0.01)
+                time.sleep(0.05)
 
         # Check to see if the task was done sucessfully. If it was, add 1 to the episode
         # counter and save the episode_dict to the minibatch list
@@ -145,6 +133,7 @@ for cycle in range(0, MAX_CYCLES):
     # add transitions to the replay buffer (after each cycle ---> MAX_EPISODES * MAX_EP_LENGTH)
     agent.store(mb)
 
+print(MAX_EPISODES*MAX_CYCLES, '\t', count)
 agent.memory.save(save_file_name) # pickle the memory
 
 env.close() # close the sim

@@ -10,6 +10,7 @@ from panda_gym.envs.robots.panda import Panda
 from typing import Optional
 from gym import spaces
 from panda_gym.envs.core import PyBulletRobot
+from panda_gym.envs.tasks.push import Push
 
 class PickAndPlace(Task):
     def __init__(
@@ -114,7 +115,7 @@ class PickAndPlace(Task):
             return -d
 
 
-class CustomEnv(RobotTaskEnv):
+class OldCustomEnv(RobotTaskEnv):
     """Pick and Place task wih Panda robot.
     Args:
         render (bool, optional): Activate rendering. Defaults to False.
@@ -127,5 +128,20 @@ class CustomEnv(RobotTaskEnv):
         sim = PyBullet(render=render)
         self.robot = Panda(sim, block_gripper=False, base_position=np.array([-0.6, 0.0, 0.0]), control_type=control_type)
         task = PickAndPlace(sim, reward_type=reward_type)
+        super().__init__(self.robot, task)
+        
+class CustomEnv(RobotTaskEnv):
+    """Pick and Place task wih Panda robot.
+    Args:
+        render (bool, optional): Activate rendering. Defaults to False.
+        reward_type (str, optional): "sparse" or "dense". Defaults to "sparse".
+        control_type (str, optional): "ee" to control end-effector position or "joints" to control joint values.
+            Defaults to "ee".
+    """
+
+    def __init__(self, render: bool = False, reward_type: str = "sparse", control_type: str = "ee") -> None:
+        sim = PyBullet(render=render)
+        self.robot = Panda(sim, block_gripper=False, base_position=np.array([-0.6, 0.0, 0.0]), control_type=control_type)
+        task = Push(sim, reward_type=reward_type)
         super().__init__(self.robot, task)
         

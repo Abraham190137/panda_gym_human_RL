@@ -1,6 +1,5 @@
 
 from custom_enviroment import CustomEnv
-from custom_stack_env import PandaStackEnv
 from panda_gym.envs.panda_tasks.panda_pick_and_place import PandaPickAndPlaceEnv
 # from panda_gym.envs.panda_tasks.panda_stack import PandaStackEnv
 from noise import UniformNoise, OUNoise, UniformNoiseDecay
@@ -19,16 +18,17 @@ import psutil
 import time
 from copy import deepcopy as dc
 import os
+import shutil
 import torch
 import csv
 import time
 
 # Name of the folder to save the run data in:
-run_label = "Pick and Place - Humam25p - E100, C20, EP16, np4, ns0.3, rs"
+run_label = "Pick and Place - Re-Run25p - E100, C20, EP16, np4, ns0.3, rs"
 # run_label = 'Delete me'
 
 # Name of the human_buffer_file to use. If no human buffer is desired, put None
-human_buffer_file = "Human_Buffers/Pick and Place, ns0.3, s5000, 7-20.pkl"
+human_buffer_file = "Pick and Place Re-Run Buffer Test 1.pkl"
 RunEnv = PandaPickAndPlaceEnv # Panda_Gym environment for the run.
 env_name = "PandaPickAndPlaceEnv"
     
@@ -206,6 +206,8 @@ if MPI.COMM_WORLD.Get_rank() == 0:
     print_file = path + "/printout.txt"    
     with open(print_file, 'a') as file:
         file.write('Start Main \n\n')
+
+    shutil.copy(__file__, path + '/copy_of_code.py')
 
 # Create the agent
 agent = Agent(n_states=state_shape,

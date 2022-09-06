@@ -1,6 +1,5 @@
 
 from custom_enviroment import CustomEnv
-from custom_stack_env import CustomStackEnv
 from panda_gym.envs.panda_tasks.panda_pick_and_place import PandaPickAndPlaceEnv
 # from panda_gym.envs.panda_tasks.panda_stack import PandaStackEnv
 from noise import UniformNoise, OUNoise, UniformNoiseDecay
@@ -19,23 +18,18 @@ import psutil
 import time
 from copy import deepcopy as dc
 import os
-import shutil
-import shutil
 import torch
 import csv
 import time
 
-
-
 # Name of the folder to save the run data in:
-run_label = "Stack - Humam25p - E200, C20, EP16, ES100, np4, ns0.3, scaled curr, rs"
+run_label = "Pick and Place - Re-Run25p - E40, C20, EP16, np4, ns0.3, rs"
 # run_label = 'Delete me'
 
 # Name of the human_buffer_file to use. If no human buffer is desired, put None
-human_buffer_file = "Human_Buffers/Custom Stack (sparse), ns0.3, s5000, 7-22.pkl"
-# human_buffer_file = None
-RunEnv = CustomStackEnv # Panda_Gym environment for the run.
-env_name = "CustomStackEnv"
+human_buffer_file = "Pick and Place Re-Run Buffer Test 1.pkl"
+RunEnv = PandaPickAndPlaceEnv # Panda_Gym environment for the run.
+env_name = "PandaPickAndPlaceEnv"
     
 # --------------------------------------------------------
 # ---------------- DEFINE HYPERPARAMETERS ----------------
@@ -49,12 +43,12 @@ RENDER = True
 INTRO = False
 Train = True
 Play_FLAG = False
-MAX_EPOCHS = 200             # NOTE: fetch push should need 12-13 epochs to achieve baseline performance
+MAX_EPOCHS = 40             # NOTE: fetch push should need 12-13 epochs to achieve baseline performance
 MAX_CYCLES = 20
 num_updates = 40
 MAX_EPISODES = 16           # NOTE: matching HER paper that has 800 episodes per epoch (50 cycles * 16 episodes = 800)
-EPISODE_STEPS = 100 
-memory_size = 1e6/EPISODE_STEPS  # 1e6
+EPISODE_STEPS = 50 
+memory_size = 1e6  # 7e+5 // 50
 batch_size = 256
 actor_lr = 1e-3
 critic_lr = 1e-3
@@ -62,7 +56,6 @@ gamma = 0.98
 tau = 0.05  
 k_future = 4                # Determines what % of the sampled transitions are HER vs ER (k_future = 4 results in 80% HER)
 human_portion = 0.25 # Portion of training done with the human buffer
-curriculum_portion = 0.5
 action_penalty = 1
 action_multiplier = np.array([1, 1, 1, 0.3]) # Adjust the action. Between 0.1 and 0.3 seems good.
 # resume_file = "pick_and_place_agent_weights.pth"
@@ -213,8 +206,6 @@ if MPI.COMM_WORLD.Get_rank() == 0:
     with open(print_file, 'a') as file:
         file.write('Start Main \n\n')
 
-    shutil.copy(__file__, path + '/run_code.py')
-
 # Create the agent
 agent = Agent(n_states=state_shape,
               n_actions=n_actions,
@@ -257,7 +248,6 @@ noise = UniformNoise(env.action_space, amplitude = 0.2, pure_rand = 0.3)
 noise.reset()
 
 if Train:
-    success_rate = 0
     t_success_rate = []
     t_reward = []
     ep_success = []
@@ -305,32 +295,10 @@ if Train:
                 noise.reset()
 
                 # maximum episode length of 50 ---- MAYBE TURN THIS INTO ANOTHER HYPERPARAMETER?????
-                if np.random.uniform() < curriculum_portion: #*(1-success_rate):
-                    use_curriculum = True
-                    start_step = np.random.uniform(0, EPISODE_STEPS - 1)
-                    episode_index = np.random.choice(agent.human_buffer.length)
-
-                    target = dc(agent.human_buffer.memory[episode_index]["desired_goal"][1])
-                    start_pos = dc(agent.human_buffer.memory[episode_index]["state"][1])
-                    env.sim.set_base_pose("target1", target[:3], np.array([0.0, 0.0, 0.0, 1.0]))
-                    env.sim.set_base_pose("target2", target[3:], np.array([0.0, 0.0, 0.0, 1.0]))
-                    env.sim.set_base_pose("object1", start_pos[-24:-21], np.array([0.0, 0.0, 0.0, 1.0]))
-                    env.sim.set_base_pose("object2",  start_pos[-12:-9], np.array([0.0, 0.0, 0.0, 1.0]))
-                    # env.task.goal = target
-
-                    # env_dict = env._get_obs()
-                    # state = env_dict["observation"]
-                    # achieved_goal = env_dict["achieved_goal"]
-                    # desired_goal = env_dict["desired_goal"]
-                else:
-                    use_curriculum = False
-
                 for t in range(EPISODE_STEPS):
-                    if use_curriculum and t < start_step:
-                        action = dc(agent.human_buffer.memory[episode_index]["action"][t])
-                    else:
-                        action_noiseless = agent.choose_action(state, desired_goal)
-                        action = noise.get_action(action_noiseless, total_episodes)
+
+                    action_noiseless = agent.choose_action(state, desired_goal)
+                    action = noise.get_action(action_noiseless, total_episodes)
                     
                     next_env_dict, reward, done, info = env.step(action*action_multiplier)
                     rew+=reward

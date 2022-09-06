@@ -17,6 +17,7 @@ class HumanBuffer:
             self.memory = pickle.load(pickle_file)
         self.episode_length = episode_length
         self.env = env
+        self.length = len(self.memory)
         
     def sample(self, batch_size):
         """
@@ -30,7 +31,7 @@ class HumanBuffer:
         # Get a random sampling of episode indicies and corresponding
         # time indicies
         
-        epoch_indices = np.random.choice(len(self.memory), batch_size)
+        episode_indices = np.random.choice(self.length, batch_size)
         time_indices = np.random.choice(self.episode_length, batch_size)
         
         states = []
@@ -43,7 +44,7 @@ class HumanBuffer:
         # acheived_goals, states (which include all pieces of information) are stored. 
 
         # Loop through each episode timestep pair, recording transition info.
-        for episode, timestep in zip(epoch_indices, time_indices):
+        for episode, timestep in zip(episode_indices, time_indices):
             states.append(dc(self.memory[episode]["state"][timestep]))
             actions.append(dc(self.memory[episode]["action"][timestep]))
             desired_goals.append(dc(self.memory[episode]["desired_goal"][timestep]))

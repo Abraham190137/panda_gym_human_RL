@@ -24,7 +24,7 @@ class Stack(Task):
         reward_type="sparse",
         distance_threshold=0.04,
         goal_xy_range=0.3,
-        obj_xy_range=0.3,
+        obj_xy_range=0.3
     ) -> None:
         super().__init__(sim)
         self.reward_type = reward_type
@@ -34,6 +34,7 @@ class Stack(Task):
         self.goal_range_high = np.array([goal_xy_range / 2, goal_xy_range / 2, 0])
         self.obj_range_low = np.array([-obj_xy_range / 2, -obj_xy_range / 2, 0])
         self.obj_range_high = np.array([obj_xy_range / 2, obj_xy_range / 2, 0])
+
         with self.sim.no_rendering():
             self._create_scene()
             self.sim.place_visualizer(target_position=np.zeros(3), distance=0.9, yaw=45, pitch=-30)
@@ -74,14 +75,14 @@ class Stack(Task):
 
     def get_obs(self) -> np.ndarray:
         # position, rotation of the object
-        object1_position = np.array(self.sim.get_base_position("object1"))
-        object1_rotation = np.array(self.sim.get_base_rotation("object1"))
-        object1_velocity = np.array(self.sim.get_base_velocity("object1"))
-        object1_angular_velocity = np.array(self.sim.get_base_angular_velocity("object1"))
-        object2_position = np.array(self.sim.get_base_position("object2"))
-        object2_rotation = np.array(self.sim.get_base_rotation("object2"))
-        object2_velocity = np.array(self.sim.get_base_velocity("object2"))
-        object2_angular_velocity = np.array(self.sim.get_base_angular_velocity("object2"))
+        object1_position = np.array(self.sim.get_base_position("object1")) #3
+        object1_rotation = np.array(self.sim.get_base_rotation("object1")) #3
+        object1_velocity = np.array(self.sim.get_base_velocity("object1")) #3
+        object1_angular_velocity = np.array(self.sim.get_base_angular_velocity("object1")) #3
+        object2_position = np.array(self.sim.get_base_position("object2")) #3
+        object2_rotation = np.array(self.sim.get_base_rotation("object2")) #3
+        object2_velocity = np.array(self.sim.get_base_velocity("object2")) #3
+        object2_angular_velocity = np.array(self.sim.get_base_angular_velocity("object2")) #3
         observation = np.concatenate(
             [
                 object1_position,
@@ -153,8 +154,8 @@ class Stack(Task):
             d2 = distance(achieved_goal[:, 3:6], desired_goal[:, 3:6])
         test1 = np.array((d1 > self.distance_threshold), dtype=np.float64)
         test2 = np.array((d2 > self.distance_threshold), dtype=np.float64)
-        # if self.reward_type == "sparse":
-        #     return -np.clip(test1 + test2, 0, 1)
+        if self.reward_type == "sparse":
+            return -np.clip(test1 + test2, 0, 1)
         elif self.reward_type == 'semi-sparse':
             return -(test1 + test2)
         else:
@@ -170,9 +171,10 @@ class CustomStackEnv(RobotTaskEnv):
             Defaults to "ee".
     """
 
-    def __init__(self, render: bool = False, reward_type: str = "semi-sparse", control_type: str = "ee") -> None:
+    def __init__(self, render: bool = False, reward_type: str = "sparse", control_type: str = "ee") -> None:
         sim = PyBullet(render=render)
         robot = Panda(sim, block_gripper=False, base_position=np.array([-0.6, 0.0, 0.0]), control_type=control_type)
         task = Stack(sim, reward_type=reward_type)
         super().__init__(robot, task)
+
         
